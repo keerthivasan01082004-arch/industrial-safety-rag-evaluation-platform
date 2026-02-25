@@ -25,6 +25,7 @@ from openai import OpenAI
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 
 
 # Configuration read from environment variables.
@@ -51,6 +52,13 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # FastAPI application instance
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials = False, 
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class Query(BaseModel):
     """Request model for incoming queries.
