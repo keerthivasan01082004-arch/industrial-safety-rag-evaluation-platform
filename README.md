@@ -171,6 +171,3 @@ To add a new evaluation approach:
 
 Evaluation scores are evidence for comparison, not a substitute for expert review. Results depend on document quality, question design, retrieval configuration, model behavior, and judge prompts. Benchmark findings should be interpreted with those limitations in mind, especially when evaluating safety-critical technical content.
 
-## License
-
-See [LICENSE](LICENSE) for the project license.
