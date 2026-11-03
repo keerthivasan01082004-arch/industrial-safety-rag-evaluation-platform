@@ -1,226 +1,176 @@
-# Safety RAG Evaluation
+# Industrial Safety RAG Evaluation Platform
 
-A Python-based retrieval-augmented generation (RAG) system for evaluating different retrieval approaches on safety-critical documentation, specifically the UR5e Universal Robots User Manual.
+A reproducible evaluation framework for comparing Retrieval-Augmented Generation (RAG) strategies on industrial-safety documentation.
+
+The platform turns technical PDF manuals into searchable knowledge, evaluates multiple retrieval approaches, and produces structured metrics and analysis for comparing answer quality, retrieval behavior, and model performance.
+
+> **Pipeline:** PDF documents → preprocessing → retrieval → answer generation → automated evaluation → comparative analysis
 
 ## Overview
 
-This project implements and compares multiple retrieval strategies for answering safety questions about industrial robotics equipment. It processes technical documentation, builds multiple retrieval indexes, and evaluates their effectiveness using various RAG approaches.
+Industrial and engineering manuals contain dense, long-context information that is difficult to evaluate with a single retrieval strategy. This project provides a modular workflow for testing approaches such as keyword retrieval, semantic retrieval, graph-based retrieval, and hybrid RAG pipelines against reproducible question-answer datasets.
 
-### Overview
+The framework is designed for experimentation rather than a single application. New retrievers, judge models, metrics, and analysis modules can be added without restructuring the entire pipeline.
 
-This project implements a full **PDF → Preprocess → RAG → Evaluation → Analysis** pipeline that supports:
+## Key capabilities
 
-- Multi-stage PDF preprocessing (OCR, TOC splitting, chunking, embedding)
-- Multiple retrieval strategies (BM25, semantic, graph, vanilla RAG, etc.)
-- Batch + concurrent evaluation workflows
-- Modular & extensible evaluation framework (LLM-as-a-judge metriccs)
-- Deterministic pipelines with row-count validation
-- Automated analysis for model-to-model and approach-to-approach comparison
+- Multi-stage PDF preparation with text extraction, document splitting, chunking, and embedding.
+- Multiple retrieval approaches, including BM25, semantic/vector, graph-based, and vanilla RAG configurations.
+- Interactive RAG generation and batch experiment workflows.
+- Sequential or concurrent evaluation for scaling experiments.
+- Automated LLM-as-a-judge assessment with configurable prompts and models.
+- Traditional metrics such as cosine similarity, ROUGE-L, and BLEU.
+- Row-count, key-presence, duplicate, and schema validation across pipeline stages.
+- Analysis notebooks and scripts for comparing models, retrievers, and experiment runs.
 
-## Project Structure
+## Architecture
 
+```text
+┌─────────────────────┐
+│ Industrial PDF Docs │
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│ Preprocessing       │  extraction · splitting · chunking · embeddings
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│ Retriever Builders   │  BM25 · semantic · graph · hybrid approaches
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│ RAG Generation      │  context assembly · model response · trace output
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│ Evaluation Engine   │  metrics · LLM judge · batch/concurrent runs
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│ Analysis & Reports  │  merged results · comparisons · visualizations
+└─────────────────────┘
 ```
-safety_rag_evaluation/
-├── code/
-│   ├── analysis/                # Reporting, plots, summaries
-│   ├── evaluation/              # Batch + concurrent evals (extensible)
-│   ├── preprocess/              # PDF → OCR → chunk → embed
-│   ├── pre_process/             # (Legacy) — to be merged into preprocess/
-│   ├── rag/                     # Retrieval logic, prompt assembly
-│   └── utils/                   # Logging, config, helpers, validation
-│
+
+## Evaluation workflow
+
+1. **Prepare documents** — Extract and structure content from source PDF manuals.
+2. **Build retrieval assets** — Create the indexes, embeddings, and retriever configurations required by each approach.
+3. **Generate answers** — Run individual questions or batch experiments through the RAG pipeline.
+4. **Evaluate outputs** — Compare generated answers with reference data using automatic metrics and configurable LLM judges.
+5. **Validate and merge results** — Check row alignment, required keys, duplicates, and schema consistency before analysis.
+6. **Analyze experiments** — Produce comparative summaries, plots, and model-to-model or approach-to-approach evaluations.
+
+## Retrieval approaches
+
+The framework is organized around interchangeable retrieval approaches, including:
+
+- **BM25** for lexical keyword matching.
+- **Semantic retrieval** using embedding similarity.
+- **Graph-based retrieval** for connected context traversal.
+- **Vanilla RAG** for baseline comparison.
+- **Hybrid or extended approaches** that can be registered through the modular retriever layer.
+
+## Metrics and validation
+
+### Answer-quality metrics
+
+- Cosine similarity
+- ROUGE-L
+- BLEU
+- LLM-as-a-judge assessments for helpfulness and correctness against reference answers
+
+### Data-integrity checks
+
+- Row-count alignment across raw outputs, model responses, evaluations, and merged files
+- Required-key and schema validation
+- Duplicate detection
+- Consistency checks before analysis and reporting
+
+## Repository structure
+
+```text
+industrial-safety-rag-evaluation-platform/
+├── system/
+│   ├── analysis/       # Result summaries, metrics, and analysis utilities
+│   ├── evaluation/     # Batch fetching, parsing, judging, and result merging
+│   ├── preprocess/     # PDF processing and corpus construction
+│   ├── rag/            # Retrieval approaches, generation, and RAG utilities
+│   ├── scripts/        # Command-line workflow helpers
+│   └── utils/          # Environment configuration and shared utilities
 ├── data/
-│   ├── input/                   # Raw PDFs
-│   ├── preprocessed/
-│   │   ├── pdfs/
-│   │   ├── tests_csvs/          # Ground-truth QA test sets
-│   │   └── vstore/              # Vector store embeddings + index
-│   │
-│   └── results/
-│       ├── batchprocess/        # Raw batch outputs, multi-run
-│       ├── eval/                # Post-eval JSONL (scores)
-│       ├── rag/                 # Raw RAG retrieval outputs
-│       ├── summary/             # Aggregated evaluation metrics
-│
-├── prompts/                     # Prompt templates (system, judge, few-shot)
-│
-├── venv/                        # Virtual environment (ignored in repo)
-│
-├── .env                         # API keys
-├── requirements.txt             # Dependencies
-├── README.md                    # Project documentation
-└── LICENSE                      # License info
+│   ├── input/          # Source manuals and input documents
+│   ├── preprocessed/   # Processed PDFs, test sets, and vector-store assets
+│   └── results/        # RAG outputs, evaluation files, and summaries
+├── notebooks/          # Experiment analysis and synthetic QA generation
+├── requirements.txt    # Python dependencies
+├── LICENSE
+└── README.md
 ```
 
-# Pipeline Overview
+## Installation
 
-## **1. PDF → Preprocess (`code/preproces/`)**
-
-Handles all document preparation:
-
-- Something
--
----
-
-## **2. Retrieval Layer (`code/rag/`)**
-
-Implements multiple RAG retrieval types:
-
-- **BM25** keyword search  
-- **Semantic RAG** via embedding similarity  
-- **Graph RAG** with EAGER / MMR traversal  
-- more 
-- 
----
-
-## **3. Evaluation Engine (`code/evals/`)**
-
-A fully modular evaluation subsystem with:
-
-###  Batch or concurrent evaluation
-- Sequential mode for if you want to see evalation for a smalll set of examples   
-- Concurrent mode for scaling thousands of samples
-
-###  Built-in metrics
-- Cosine similarity  
-- ROUGE-L  
-- BLEU  
-
-###  LLM-as-judge evaluation
-Configurable judge prompts and models for:
-
-- Helpfulness  
-- Correctness vs. gold answer  
-
-### ✔ Extensibility requirement
-**The evaluation module is intentionally designed to be extensible:**
-
-- Register new evaluators simply by dropping in new Python modules  
-- Supports multiple judge models  
-- Enables rapid experimentation  
-
-Example structure:
-Something 
-### Validation & Row-count Guarantees
-Checks include:
-
-- Row count alignment across:
-  - Raw RAG results  
-  - Model outputs  
-  - Pre-eval JSON  
-  - Post-eval JSON  
-  - Merged runs  
-- Key presence validation  
-- Duplicate detection  
-- Schema consistency  
-
----
-
-## Installation(Need Update)
-
-1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd safety_rag_evaluation
-```
-
-2. Install dependencies:
-```bash
+git clone https://github.com/keerthivasan01082004-arch/industrial-safety-rag-evaluation-platform.git
+cd industrial-safety-rag-evaluation-platform
+python -m venv .venv
+source .venv/bin/activate       # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-3. Create a `.env` file with the following variables:
+Create a `.env` file for the services and models used by your experiment configuration. Typical variables may include:
+
 ```env
 OPENAI_API_KEY=your_openai_api_key
-OPENAI_VECTOR_STORE_ID=your_vector_store_id
-
+OPENAI_VECTOR_STORE_ID=your_openai_vector_store_id
 ASTRA_DB_API_ENDPOINT=your_astra_db_endpoint
 ASTRA_DB_APPLICATION_TOKEN=your_astra_db_token
-
 LANGSMITH_API_KEY=your_langsmith_api_key
 LANGSMITH_TRACING=true
 ```
 
-## Configuration(Need update )
+Never commit real credentials, API tokens, or private documents to the repository.
 
-Key parameters in `CONFIG` (code/1_preprocess.py and code/2_rag.py):
-- `model`: OpenAI model (default: gpt-5-nano-2025-08-07)
-- `max_tokens`: Maximum output tokens (default: 5000)
-- `reasoning_effort`: Reasoning level (low/medium/high)
-- `embed_model`: Embedding model (default: text-embedding-3-small)
-- `top_k`: Number of documents to retrieve (default: 10)
-- `max_chars_per_content`: Character limit per retrieved chunk (default: 25000)
+## Running the workflow
 
-## Usage(Need update)
+The modular scripts live under `system/scripts/`. Adapt configuration values and input paths to your dataset before running an experiment.
 
-### Step 1: Process the PDF
+### Preprocess documents
+
 ```bash
-python code/0_ur5e_multiple_pdfs.py
+python -m system.scripts.preprocess_documents
 ```
 
-This splits the source manual into sections, crops pages, and generates word count statistics.
+### Build or inspect RAG experiments
 
-### Step 2: Build Retrievers
+The main orchestration modules are available in `system/main.py` and `system/main_long_context.py`. Retrieval implementations and generation utilities are located in `system/rag/`.
+
+### Evaluate and merge results
+
 ```bash
-python code/1_preprocess.py
+python -m system.scripts.build_judge_batch
+python -m system.scripts.fetch_batch_output
+python -m system.scripts.merge_judge_results
+python -m system.scripts.check_dups
 ```
 
-This creates BM25, vector, and graph-based retrievers from the processed documents.
+### Analyze results
 
-### Step 3: Query with RAG
-```bash
-python code/2_rag.py
-```
+Use the analysis notebooks in `notebooks/` or the utilities in `system/analysis/` to compare retrieval approaches, judge scores, and model performance.
 
-This runs individual queries using the RAG system interactively.
+## Extending the framework
 
-### Step 4: Run Automated Experiments (Optional)
-```bash
-python code/3_rag_exp_with_evals.py
-```
+To add a new evaluation approach:
 
-This executes a systematic evaluation sweep across multiple configurations:
-- Reads test questions from `data/sample_test_questions.csv`
-- Loads prompt templates from `prompts/` directory
-- Runs all combinations of approaches, models, and parameters
-- Computes automated metrics (cosine, ROUGE-L, BLEU)
-- Performs LLM-as-judge evaluation (relevance, faithfulness, helpfulness, correctness)
-- Saves incremental results to `results/experiment_results.csv`
+1. Implement the retriever or evaluator in the corresponding `system/rag/` or `system/evaluation/` module.
+2. Register the approach in the project’s enums and configuration layer.
+3. Add a reproducible test or experiment configuration.
+4. Run the validation scripts before merging results.
+5. Document the method and expected output format.
 
-You can customize the experiment by modifying the configuration at the bottom of the file:
-- `approaches`: List of retrieval methods to test
-- `models`: List of OpenAI models to evaluate
-- `max_tokens_list`: Token limits to test
-- `efforts`: Reasoning effort levels (minimal, low, medium, high)
-- `topk_list`: Number of documents to retrieve
-- `ans_instr_A/B`: Answer instruction variants (file paths or text)
-- `fewshot_A/B`: Few-shot preamble variants (file paths or text)
-- `judge_model`: Model to use for LLM-as-judge evaluation
+## Responsible evaluation
 
-## Output
+Evaluation scores are evidence for comparison, not a substitute for expert review. Results depend on document quality, question design, retrieval configuration, model behavior, and judge prompts. Benchmark findings should be interpreted with those limitations in mind, especially when evaluating safety-critical technical content.
 
-### Individual Query Results (`results/rag_results.csv`)
-Generated by `2_rag.py` with columns:
-- `time`: Timestamp of query
-- `question`: User question
-- `approach`: Retrieval method used
-- `filename`: Source document
-- `score`: Retrieval score
-- `snippet`: Text preview (first 200 chars)
-- `answer`: Generated response
-- `resp_id`, `model`, `input_tokens`, `output_tokens`: API metadata
+## License
 
-### Experiment Results (`results/experiment_results.csv`)
-Generated by `3_rag_exp_with_evals.py` with columns:
-- `datetime`: Timestamp in ET timezone
-- `min_words_for_subsplit`: Preprocessing parameter for provenance
-- `approach`, `model`, `max_tokens`, `reasoning_effort`, `top_k`: Experimental factors
-- `answer_instructions_id`, `few_shot_id`: A/B variant identifiers
-- `question`, `gold_answer`, `generated_answer`: Question and answers
-- `retrieved_files`: Semicolon-separated list of source documents
-- `cosine`, `rougeL`, `bleu`: Automated similarity metrics
-- `judge_doc_relevance`, `judge_faithfulness`, `judge_helpfulness`, `judge_correctness_vs_ref`: LLM-as-judge evaluations (needs to be extracted from the reasoning chain)
-- `meta_*`: Additional metadata (response ID, token counts, etc.)
-
-
-
+See [LICENSE](LICENSE) for the project license.
